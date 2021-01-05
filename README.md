@@ -29,6 +29,9 @@ This script reads the above JSON file and outputs a merged and
 smoothed GeoJSON file with polygons outlining the regions where the
 species can be found.
 
+The input JSON file is trivially simple, which means the input species
+observations do not need to come from GBIF.
+
 Run it with:
 
 ```

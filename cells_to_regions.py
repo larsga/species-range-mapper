@@ -190,7 +190,7 @@ def get_feature(y, x):
             feature.add_point(walker.get_upper_right())
             walker.turn_about() # got to go back where we came from
         else:
-            # need to draw the square
+            # this feature is just a single square, so draw all corners
             feature.add_point(walker.get_lower_left())
             feature.add_point(walker.get_upper_left())
             feature.add_point(walker.get_upper_right())
