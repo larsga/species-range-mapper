@@ -1,7 +1,7 @@
 
 # species-range-mapper
 
-Two simple Python scripts to generate maps of the geographic
+Two simple Python 2.x scripts to generate maps of the geographic
 distribution of a species from a dataset listing individual locations
 where the species has been observed.
 
