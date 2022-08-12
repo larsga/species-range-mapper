@@ -11,6 +11,7 @@ import sys, json
 
 SMOOTH = True
 MIN_SIZE = 5  # discard groups of contiguous cells smaller than this
+SIMPLIFY_TOLERANCE = 0.1
 
 data = json.load(open(inf))
 MAX_NORTH = data['MAX_NORTH']
@@ -220,22 +221,58 @@ while True:
 
 # ===== SMOOTH POLYGONS
 
-def smooth(p):
+def smooth(p, extend = 0):
     r = 64
-    return list(Polygon(p)
-                .buffer(0.5, resolution = r)
-                .buffer(-0.5, resolution = r)
-                .buffer(0.5, resolution = r)
-                .buffer(-0.5, resolution = r)
-                .buffer(0.5, resolution = r)
-                .buffer(-0.4, resolution = r) # extend perimeter by 0.1 degrees
-                .exterior.coords)
+    p = (Polygon(p)
+        .buffer(0.5, resolution = r, cap_style = 1, join_style = 1)
+        .buffer(-0.5, resolution = r, cap_style = 1, join_style = 1)
+        .buffer(0.5, resolution = r, cap_style = 1, join_style = 1)
+        .buffer(-0.5, resolution = r, cap_style = 1, join_style = 1)
+        .buffer(0.5, resolution = r, cap_style = 1, join_style = 1)
+        .buffer(-0.5 + extend, resolution = r, cap_style = 1, join_style = 1)
+    )
+    return p
+
+def simplify(p):
+    return p.simplify(SIMPLIFY_TOLERANCE, True)
+
+def jsonify(p):
+    return list(p.exterior.coords)
+
+def do_merges(polygons):
+    # check if there are overlapping pairs, and if so merge them
+    merged_away = set()
+    finals = []
+    for (ix, p1) in enumerate(polygons):
+        if ix in merged_away:
+            continue
+
+        for ix2 in range(ix + 1, len(polygons)):
+            if ix2 in merged_away:
+                continue
+            p2 = polygons[ix2]
+
+            if p1.intersects(p2):
+                merged_away.add(ix2)
+                p1 = p1.union(p2)
+
+        finals.append(p1)
+
+    return finals
 
 if SMOOTH:
     from shapely.geometry import Polygon
     polygons = [
-        smooth(p) for p in polygons
+        smooth(p, extend = 0.1) for p in polygons
     ]
+
+    polygons = do_merges(polygons)
+    polygons = [
+        smooth(simplify(smooth(p)), extend = 0.1) for p in polygons
+    ]
+    polygons = do_merges(polygons)
+
+    polygons = [jsonify(p) for p in polygons]
 
 # ===== GEOJSON OUTPUT
 
